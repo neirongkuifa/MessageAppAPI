@@ -1,0 +1,27 @@
+{
+	"name": "restapi",
+	"version": "1.0.0",
+	"description": "",
+	"main": "app.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"start": "nodemon app.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/neirongkuifa/RestAPI.git"
+	},
+	"author": "",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/neirongkuifa/RestAPI/issues"
+	},
+	"homepage": "https://github.com/neirongkuifa/RestAPI#readme",
+	"dependencies": {
+		"express": "^4.16.4"
+	},
+	"devDependencies": {
+		"body-parser": "^1.18.3",
+		"nodemon": "^1.18.10"
+	}
+}
