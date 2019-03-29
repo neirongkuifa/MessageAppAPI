@@ -39,7 +39,6 @@ exports.postSignup = async (req, res, next) => {
 
 exports.postLogin = async (req, res, next) => {
 	try {
-		console.log('Here')
 		const errors = validationResult(req)
 		if (!errors.isEmpty()) {
 			console.log(errors.array())
@@ -68,13 +67,11 @@ exports.postLogin = async (req, res, next) => {
 			'hardtoguessthissecret',
 			{ expiresIn: '1h' }
 		)
-		res
-			.status(200)
-			.json({
-				message: 'Login Successfully',
-				token,
-				userId: user._id.toString()
-			})
+		res.status(200).json({
+			message: 'Login Successfully',
+			token,
+			userId: user._id.toString()
+		})
 	} catch (err) {
 		if (!err.httpStatusCode) {
 			err.httpStatusCode = 500

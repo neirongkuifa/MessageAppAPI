@@ -5,6 +5,10 @@ const feedController = require('../controllers/feed')
 const isAuth = require('../middleware/isAuth')
 const router = express.Router()
 
+router.get('/user', isAuth, feedController.getUser)
+
+router.put('/user', isAuth, feedController.putUser)
+
 router.get('/post/:postId', isAuth, feedController.getPost)
 
 router.get('/posts', isAuth, feedController.getPosts)

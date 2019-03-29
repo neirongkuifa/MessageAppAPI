@@ -5,12 +5,52 @@ const path = require('path')
 
 const Post = require('../models/post')
 const User = require('../models/user')
+const io = require('../socket')
 
 const ITEMS_PER_PAGE = 2
 
+exports.getUser = async (req, res, next) => {
+	try {
+		const user = await User.findById(req.userId)
+		if (!user) {
+			const err = new Error('No Such User')
+			err.httpStatusCode = 422
+			throw err
+		}
+		res
+			.status(200)
+			.json({ message: 'Successfully Received Status', status: user.status })
+	} catch (err) {
+		if (!err.httpStatusCode) {
+			err.httpStatusCode = 500
+		}
+		next(err)
+	}
+}
+
+exports.putUser = async (req, res, next) => {
+	console.log(req.body.userStatus)
+	try {
+		const user = await User.findById(req.userId)
+		if (!user) {
+			const err = new Error('No Such User')
+			err.httpStatusCode = 422
+			throw err
+		}
+		user.status = req.body.userStatus
+		await user.save()
+		res.status(200).json({ message: 'Status Updated' })
+	} catch (err) {
+		if (!err.httpStatusCode) {
+			err.httpStatusCode = 500
+		}
+		next(err)
+	}
+}
+
 exports.getPost = async (req, res, next) => {
 	try {
-		const post = await Post.findById(req.params.postId)
+		const post = await Post.findById(req.params.postId).populate('creator')
 		if (!post) {
 			const err = new Error('Could not find post')
 			err.httpStatusCode = 404
@@ -31,6 +71,7 @@ exports.getPosts = async (req, res, next) => {
 		const totalItems = await Post.find().countDocuments()
 		const posts = await Post.find()
 			.populate('creator')
+			.sort({ createdAt: -1 })
 			.skip((page - 1) * ITEMS_PER_PAGE)
 			.limit(ITEMS_PER_PAGE)
 
@@ -74,7 +115,13 @@ exports.postPost = async (req, res, next) => {
 		const savedPost = await post.save()
 		const user = await User.findById(req.userId)
 		user.posts.push(savedPost._id)
-		await user.save()
+		const savedUser = await user.save()
+
+		io.getIO().emit('post', {
+			action: 'create',
+			post: { ...savedPost._doc, creator: savedUser }
+		})
+
 		res.status(201).json({
 			message: 'Post Created Successfully',
 			post,
@@ -103,7 +150,7 @@ exports.putPost = async (req, res, next) => {
 		const post = await Post.findOne({
 			_id: ObjectId(req.params.postId),
 			creator: ObjectId(req.userId)
-		})
+		}).populate('creator')
 		if (!post) {
 			const err = new Error('No Such Post')
 			err.httpStatusCode = 404
@@ -119,7 +166,10 @@ exports.putPost = async (req, res, next) => {
 		post.title = req.body.title
 		post.content = req.body.content
 
-		await post.save()
+		const savedPost = await post.save()
+
+		io.getIO().emit('post', { action: 'update', post: savedPost })
+
 		res.status(200).json({ message: 'Post Updated!', post })
 	} catch (err) {
 		if (!err.httpStatusCode) {
@@ -146,6 +196,9 @@ exports.deletePost = async (req, res, next) => {
 		const filePath = path.join(__dirname, '..', post.imgUrl)
 		deleteFile(filePath)
 		await Post.deleteOne({ _id: ObjectId(req.params.postId) })
+
+		io.getIO().emit('post', { action: 'delete', post: post._id })
+
 		res.status(200).json({ message: 'Post Deleted!' })
 	} catch (err) {
 		if (!err.httpStatusCode) {

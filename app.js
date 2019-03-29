@@ -37,7 +37,7 @@ app.use('/images', express.static('images'))
 // CORS Settings
 app.use((req, res, next) => {
 	res.setHeader('Access-Control-Allow-Origin', '*')
-	res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE')
+	res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET,POST,PUT,DELETE')
 	res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 	next()
 })
@@ -64,7 +64,11 @@ mongoose
 	)
 	.then(() => {
 		console.log('Connected!')
-		app.listen(3030)
+		const server = app.listen(3030)
+		const io = require('./socket').init(server)
+		io.on('connection', socket => {
+			console.log('Client Connected')
+		})
 	})
 	.catch(err => {
 		console.log(err)
