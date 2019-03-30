@@ -2,9 +2,10 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const mongoose = require('mongoose')
 const multer = require('multer')
+const graphqlHttp = require('express-graphql')
 
-const feedRouter = require('./routes/feed')
-const authRouter = require('./routes/auth')
+const gqSchema = require('./graphql/schema')
+const gqResolver = require('./graphql/resolvers')
 
 // multer Config
 const storage = multer.diskStorage({
@@ -42,9 +43,23 @@ app.use((req, res, next) => {
 	next()
 })
 
-// Router Entry
-app.use('/feed', feedRouter)
-app.use(authRouter)
+app.use(
+	'/graphql',
+	graphqlHttp({
+		schema: gqSchema,
+		rootValue: gqResolver,
+		graphiql: true,
+		formatError(err) {
+			if (!err.originalError) {
+				return err
+			}
+			const data = err.originalError.data
+			const message = err.message || 'An Error Occured'
+			const status = err.originalError.code || 500
+			return { message, status, data }
+		}
+	})
+)
 
 // Error
 app.use((err, req, res, next) => {
@@ -57,18 +72,14 @@ app.use((err, req, res, next) => {
 // Database Config
 mongoose
 	.connect(
-		'mongodb+srv://ch48h2o:@image-shop-brnyc.mongodb.net/Message?retryWrites=true',
+		'mongodb+srv://ch48h2o:test123imageshop@image-shop-brnyc.mongodb.net/Message?retryWrites=true',
 		{
 			useNewUrlParser: true
 		}
 	)
 	.then(() => {
 		console.log('Connected!')
-		const server = app.listen(3030)
-		const io = require('./socket').init(server)
-		io.on('connection', socket => {
-			console.log('Client Connected')
-		})
+		app.listen(3030)
 	})
 	.catch(err => {
 		console.log(err)
