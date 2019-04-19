@@ -16,4 +16,4 @@ npm start
 
 ## Server Structure
 
-![](./tutorials/structure.jpeg)
+![](./structure.jpeg)
